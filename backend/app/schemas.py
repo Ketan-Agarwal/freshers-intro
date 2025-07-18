@@ -50,7 +50,6 @@ class UserProfileCreate(BaseModel):
     image_keys: Optional[List[str]] = []
 
 class UserImageOut(BaseModel):
-    id: int
     image_url: str
 
     class Config:
@@ -65,6 +64,30 @@ class UserProfileOut(BaseModel):
     hobbies: Optional[List[str]]
     interests: Optional[List[str]]
     images: List[UserImageOut]
+
+    class Config:
+        orm_mode = True
+
+
+class UserOutWithImages(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+    is_verified: bool
+    images: List[UserImageOut]
+
+    class Config:
+        orm_mode = True
+
+class UserProfileWithUser(BaseModel):
+    id: int
+    bio: Optional[str]
+    branch: Optional[str]
+    batch: Optional[str]
+    hostel: Optional[str]
+    hobbies: Optional[List[str]]
+    interests: Optional[List[str]]
+    user: UserOutWithImages
 
     class Config:
         orm_mode = True
