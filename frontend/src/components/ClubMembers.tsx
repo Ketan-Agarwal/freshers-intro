@@ -1,7 +1,7 @@
 'use client';
 
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -26,14 +26,15 @@ export default function ProfileSection({ role, profiles }: { role: string; profi
         Meet the {title}
       </h2>
       <Swiper
-        modules={[Navigation, Pagination]}
+        modules={[Navigation, Pagination, Autoplay]}
         slidesPerView={1}
         spaceBetween={20}
         navigation
-        pagination={{ clickable: true }}
+        autoplay={{delay: 2000}}
+        pagination={{ clickable: true, type:"fraction" }}
         breakpoints={{
-          640: { slidesPerView: 2 },
-          780: {slidesPerView: 3},
+          880: { slidesPerView: 2},
+          1280: {slidesPerView: 3},
           1440: {slidesPerView: 4}
         }}
         className="rounded-xl shadow-md"

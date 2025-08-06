@@ -44,13 +44,18 @@ socials: Record<string, string>;
 const InitialLoad = async (
   setFormData: React.Dispatch<React.SetStateAction<FormDataType>>,
   setInitialProfile: React.Dispatch<React.SetStateAction<Profile>>,
-  setImages: Dispatch<SetStateAction<Knowledge[]>>
+  setImages: Dispatch<SetStateAction<Knowledge[]>>,
+  router: ReturnType<typeof useRouter>
 ) => {
   try {
     const res = await fetch(`${BACKEND_ORIGIN}/profile/get-my-profile`, {
       method: 'GET',
       credentials: 'include',
     });
+
+    if (res.status === 401) {
+        router.refresh();
+      }
 
     if (res.status === 404) {
       const emptyProfile: Profile = {
@@ -211,7 +216,7 @@ useEffect(() => {
       
       // const parsedSaved = savedProfile ? JSON.parse(savedProfile) : null;
       // const parsedInitial = savedInitial ? JSON.parse(savedInitial) : null;
-      await InitialLoad(setFormData, setInitialProfile, setImages);
+      await InitialLoad(setFormData, setInitialProfile, setImages, router);
 
       // if (parsedSaved?.branch && parsedInitial?.user?.username) {
       //   console.log("Restoring profile from a previous session.");
@@ -227,7 +232,7 @@ useEffect(() => {
       // }
     } catch (err) {
       console.error('Failed to load profile:', err);
-      await InitialLoad(setFormData, setInitialProfile, setImages);
+      await InitialLoad(setFormData, setInitialProfile, setImages, router);
     } finally {
       setHasLoaded(true);
     }
@@ -699,7 +704,7 @@ const renderStep = () => {
 
     <div className={`min-h-screen ${styles.background} lg:fixed lg:inset-0 md:mt-20 p-6 flex flex-col lg:flex-row gap-10`}>
 
-      <div className='flex h-fit justify-center'>
+      <div className='flex h-fit justify-center lg:max-w-[40%]'>
         <ProfileCard profile={initialProfile} number_of_interests={5}/>
       </div>
 

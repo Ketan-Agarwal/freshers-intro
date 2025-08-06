@@ -98,7 +98,7 @@ export default function ProfileDetails({ profile }: { profile: Profile }) {
               </section>
 
                 <div className="flex gap-3 mb-4 flex-col">
-                  <h2 className="text-xl font-semibold mb-0">Social Handles</h2>
+                  { profile.socials && Object.values(profile.socials).some(link => !!link) ? (<h2 className="text-xl font-semibold mb-0">Social Handles</h2>) : <></>}
                                 <div className='flex flex-row gap-5'>
                                   {profile.socials?.discord && (
                                     <a
