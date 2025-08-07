@@ -244,7 +244,7 @@ useEffect(() => {
         },
       });
       setInitialProfile({
-        user: { username: user.username , email: user.email, id: 0, is_verified: false, images: [] }
+        user: { username: user.username, email: user.email, id: 0, is_verified: false, images: [] }
       });
       setImages([]);
       setHasLoaded(true);
