@@ -224,7 +224,6 @@ useEffect(() => {
   const tryLoad = async () => {
     try {
       await InitialLoad(setFormData, setInitialProfile, setImages, router, setHasProfile);
-      // throw new Error("asdf");
       setHasLoaded(true);
     } catch (err) {
       console.error('Failed to load profile:', err);
