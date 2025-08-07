@@ -27,7 +27,7 @@ export default function LoginPage() {
       }
     }, [loading_or_not, isAuthenticated, router]);
   
-    if (loading_or_not) return <Loading />;
+    if (loading_or_not) return <Loading loading_text='Authenticating...' />;
   
   
 
@@ -118,7 +118,7 @@ export default function LoginPage() {
   return (
   <div className="fixed inset-0 flex items-center justify-center bg-background transition-colors">
     {loading_or_not ? (
-      <Loading />
+      <Loading loading_text='Authenticating...'/>
     ) : (
       <form
         onSubmit={handleSubmit}
@@ -155,7 +155,7 @@ export default function LoginPage() {
           <label className="text-sm font-medium block mb-1 text-primary">
             Password
           </label>
-          <div className="relative">
+          <div className="relative mb-1">
             <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={18} />
             <input
               type={showPassword ? "text" : "password"}

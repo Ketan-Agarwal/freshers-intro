@@ -26,12 +26,12 @@ export default function ProfileSection({ role, profiles }: { role: string; profi
         Meet the {title}
       </h2>
       <Swiper
-        modules={[Navigation, Pagination, Autoplay]}
+        modules={[Navigation, Autoplay]}
         slidesPerView={1}
         spaceBetween={20}
         navigation
+        loop
         autoplay={{delay: 2000}}
-        pagination={{ clickable: true, type:"fraction" }}
         breakpoints={{
           880: { slidesPerView: 2},
           1280: {slidesPerView: 3},

@@ -108,7 +108,7 @@ export default function ProfilePage({ params }: { params: Promise<{ profileId: s
 };
 
 
-  if (loading_or_not || loadingProfile) return <Loading />;
+  if (loading_or_not || loadingProfile) return <Loading loading_text='Loading profile...' />;
   if (!isAuthenticated) return null;
   if (!profile) return null;
 

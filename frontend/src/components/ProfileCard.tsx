@@ -116,7 +116,7 @@ const ProfileCard: React.FC<Props> = ({ profile, number_of_interests }) => {
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex flex-row place-content-between items-center">
+          <div className="flex flex-row place-content-between gap-9 items-center">
             <h2 className="text-xl font-semibold mb-1 group-hover:text-indigo-600 transition-colors">
               {profile.user.username}
             </h2>
