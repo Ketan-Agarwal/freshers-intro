@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, ChangeEvent, FormEvent, useTransition } from 'react';
+import React, { useState, useRef, useEffect, ChangeEvent, FormEvent, useTransition, cache } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
@@ -8,7 +8,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Branches, Hostels } from '@/utils/constants';
 import ProgressStepper from '@/components/ProgressStepper';
 import InterestTag from '@/components/InterestTag';
-import { getImages, addImages, removeKnowledge, clearImages, putImages,  } from '@/utils/indexedDB';
+// import { getImages, addImages, removeKnowledge, clearImages, putImages  } from '@/utils/indexedDB';
 import Image from 'next/image';
 import { Knowledge, Profile, User } from '@/utils/types';
 import ProfileCard from '@/components/ProfileCard';
@@ -19,7 +19,6 @@ import { FaInstagram, FaLinkedin, FaDiscord, FaGithub, FaCode, FaLaptopCode } fr
 import { compressImage, fetchImageAsFileAndPreview } from '@/utils/functions';
 import { SiHackerrank } from 'react-icons/si';
 import heic2any from 'heic2any';
-import { Badge } from '@/components/ui/badge';
 const BACKEND_ORIGIN = process.env.NEXT_PUBLIC_BACKEND_ORIGIN;
 
 const SOCIAL_ICONS: Record<string, JSX.Element> = {
@@ -45,7 +44,8 @@ const InitialLoad = async (
   setFormData: React.Dispatch<React.SetStateAction<FormDataType>>,
   setInitialProfile: React.Dispatch<React.SetStateAction<Profile>>,
   setImages: Dispatch<SetStateAction<Knowledge[]>>,
-  router: ReturnType<typeof useRouter>
+  router: ReturnType<typeof useRouter>,
+  setHasProfile: Dispatch<SetStateAction<boolean>>
 ) => {
   try {
     const res = await fetch(`${BACKEND_ORIGIN}/profile/get-my-profile`, {
@@ -55,9 +55,11 @@ const InitialLoad = async (
 
     if (res.status === 401) {
         router.refresh();
+        throw new Error('Unauthorized');
       }
 
     if (res.status === 404) {
+      setHasProfile(false);
       const emptyProfile: Profile = {
         user: { username: '', email: '', id: 0, is_verified: false, images: [] },
         bio: '',
@@ -85,8 +87,8 @@ const InitialLoad = async (
       });
       setInitialProfile(emptyProfile);
       setImages([]);
-      sessionStorage.setItem('updated_profile', JSON.stringify(emptyProfile));
-      await putImages([]);
+      // sessionStorage.setItem('updated_profile', JSON.stringify(emptyProfile));
+      // await putImages([]);
       return;
     }
 
@@ -98,13 +100,23 @@ const InitialLoad = async (
 
     try {
       const rawImages = Array.isArray(json.user?.images) ? json.user.images : [];
+      if (rawImages.length > 0) {
       image_object_array = await Promise.all(
-        rawImages.map(({ image_url }: { id: string; image_url: string }) =>
-          fetchImageAsFileAndPreview(image_url)
-        )
+        rawImages.map(async ({ image_url }: { id: string; image_url: string }) => {
+          try {
+            const cachefix = image_url+`?v=${Date.now()}`
+            return await fetchImageAsFileAndPreview(cachefix);
+          } catch (imgErr) {
+            console.warn(`Failed to fetch image ${image_url}:`, imgErr);
+            return null;
+          }
+        })
       );
+      image_object_array = image_object_array.filter(Boolean);
+      }
     } catch (imgErr) {
       console.warn('Image fetch failed:', imgErr);
+      image_object_array = [];
     }
 
     const profileData: FormDataType = {
@@ -128,7 +140,7 @@ const InitialLoad = async (
     setInitialProfile(json);
     setImages(image_object_array);
 
-    await putImages(image_object_array);
+    // await putImages(image_object_array);
   } catch (err) {
     console.error('InitialLoad failed:', err);
 
@@ -160,7 +172,7 @@ const InitialLoad = async (
 const AddIntroPage: React.FC = () => {
   const router = useRouter();
   const { theme } = useTheme();
-  const {isAuthenticated, loading_or_not} = useAuth();
+  const {isAuthenticated, loading_or_not, user} = useAuth();
  
   useEffect(() => {
     if (!loading_or_not && !isAuthenticated) {
@@ -174,6 +186,7 @@ const AddIntroPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string>('');
+  const [hasProfile, setHasProfile] = useState(true);
   // const [formData, setFormData] = useState<FormDataType>({
   //   bio: '',
   //   branch: '',
@@ -210,57 +223,45 @@ const [hasLoaded, setHasLoaded] = useState(false);
 useEffect(() => {
   const tryLoad = async () => {
     try {
-      // const savedProfile = localStorage.getItem('userProfile');
-      // const savedInitial = localStorage.getItem('initialProfile');
-      // const savedStep = localStorage.getItem('currentStep');
-      
-      // const parsedSaved = savedProfile ? JSON.parse(savedProfile) : null;
-      // const parsedInitial = savedInitial ? JSON.parse(savedInitial) : null;
-      await InitialLoad(setFormData, setInitialProfile, setImages, router);
-
-      // if (parsedSaved?.branch && parsedInitial?.user?.username) {
-      //   console.log("Restoring profile from a previous session.");
-      //   setFormData(parsedSaved);
-      //   setInitialProfile(parsedInitial);
-        
-      //   if (savedStep) setCurrentStep(parseInt(savedStep));
-      //   const storedImages = await getImages();
-      //   if (storedImages.length > 0) setImages(storedImages);
-        
-      // } else {
-      //   await InitialLoad(setFormData, setInitialProfile, setImages);
-      // }
+      await InitialLoad(setFormData, setInitialProfile, setImages, router, setHasProfile);
+      setHasLoaded(true);
     } catch (err) {
       console.error('Failed to load profile:', err);
-      await InitialLoad(setFormData, setInitialProfile, setImages, router);
-    } finally {
+      setFormData({
+        bio: '',
+        branch: '',
+        interests: [],
+        hostel: '',
+        socials: {
+          instagram: '',
+          linkedin: '',
+          discord: '',
+          github: '',
+          codeforces: '',
+          leetcode: '',
+          atcoder: '',
+          hackerrank: '',
+        },
+      });
+      setInitialProfile({
+        user: { username: user.username, email: user.email, id: 0, is_verified: false, images: [] }
+      });
+      setImages([]);
       setHasLoaded(true);
     }
   };
+  if (!loading_or_not && isAuthenticated) {
+    tryLoad();
+  }
+}, [loading_or_not, isAuthenticated]);
 
-  tryLoad();
-}, []);
-  
-  // useEffect(() => {
-  //   if (!hasLoaded) return;
-  //   const timeout = setTimeout(() => {
-  //     localStorage.setItem('userProfile', JSON.stringify(formData));
-  //   }, 400);
-  //   return () => clearTimeout(timeout);
-  // }, [formData, hasLoaded]);
+  if (loading_or_not || !isAuthenticated) {
+    return <Loading loading_text='Authenticating...' />;
+  }
 
-  // useEffect(() => {
-  //   if (!hasLoaded) return;
-  //   localStorage.setItem('currentStep', currentStep.toString());
-  // }, [currentStep, hasLoaded]);
-
-  // useEffect(() => {
-  //   if (!hasLoaded) return;
-  //   localStorage.setItem('initialProfile', JSON.stringify(initialProfile));
-  // }, [initialProfile, hasLoaded]);
-
-    if (loading_or_not) return <Loading />;
-    if (!isAuthenticated) return null;
+  if (!hasLoaded) {
+    return <Loading loading_text='Loading your profile...' />;
+  }
   
   
   const handleInputChange = (name: keyof FormDataType, value: any) => {
@@ -288,14 +289,14 @@ useEffect(() => {
     });
 
     Promise.all(readers).then(async (results) => {
-        await addImages(results);
+        // await addImages(results);
         const updatedKnowledge = [...images, ...results];
         setImages(updatedKnowledge);
     });
   };
 
   const removePhoto = async (index: number) => {
-    await removeKnowledge(index);
+    // await removeKnowledge(index);
     const updated = images.filter((_, i) => i !== index);
     setImages(updated);
   };
@@ -388,7 +389,8 @@ const uploadImagesToS3 = async (): Promise<string[]> => {
         throw new Error('Please enter your bio.');
       }
       const uploadedKeys = await uploadImagesToS3();
-
+      toast.dismiss();
+      const submit_toast_id = toast.loading("Submitting your profile...")
       // const payload = {
       //   bio: formData.bio,
       //   branch: formData.branch,
@@ -418,8 +420,10 @@ const uploadImagesToS3 = async (): Promise<string[]> => {
         const errorText = await res.text();
         throw new Error(errorText);
       }
-      toast.success('Profile updated successfully!');
-      await clearImages();
+      toast.success('Profile updated successfully!', {
+        id: submit_toast_id
+      });
+      // await clearImages();
       setImages([]);
       // localStorage.removeItem('userProfile');
       // localStorage.removeItem('currentStep');
@@ -685,7 +689,7 @@ const renderStep = () => {
               <div key={i} className="relative w-full h-32 sm:h-36 md:h-40 rounded overflow-hidden">
                 <Image
                   src={images.preview}
-                  alt={`preview-${i}`}
+                  alt={`This image will be processed and uploaded.`}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
@@ -698,14 +702,15 @@ const renderStep = () => {
     }
   };
 
-  if (!hasLoaded) return <Loading />;
+  if (!hasLoaded) return <Loading loading_text='Loading...'/>;
 
   return (
 
     <div className={`min-h-screen ${styles.background} lg:fixed lg:inset-0 md:mt-20 p-6 flex flex-col lg:flex-row gap-10`}>
 
       <div className='flex h-fit justify-center lg:max-w-[40%]'>
-        <ProfileCard profile={initialProfile} number_of_interests={5}/>
+        { hasProfile ?  <ProfileCard profile={initialProfile} number_of_interests={5}/> : "You haven't created your profile yet."}
+      
       </div>
 
       <div className='overflow-y-auto no-scrollbar mb-20 w-full max-w-6xl mx-auto bg-background-100 dark:bg-background-900 rounded-2xl shadow-lg border border-border-300 dark:border-border-700 dark:border-zinc-500 p-4 transition-all duration-300 items-center'>

@@ -30,7 +30,7 @@ export default function SignupPage() {
       }
     }, [loading_or_not, isAuthenticated, router]);
   
-    if (loading_or_not) return <Loading />;
+    if (loading_or_not) return <Loading loading_text="Loading..."/>;
   
   
 const isIITKEmail = (email: string) => {

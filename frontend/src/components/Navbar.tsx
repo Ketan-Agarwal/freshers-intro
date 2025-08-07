@@ -62,7 +62,7 @@ const Navbar = () => {
     return (
       <nav className="sticky top-0 z-50 w-full px-6 py-4 flex items-center justify-between border-b border-border bg-background text-foreground">
         <div className="flex items-center gap-3 text-2xl font-bold">
-          <Loading />
+          <Loading loading_text='Authenticating...'/>
         </div>
       </nav>
     );

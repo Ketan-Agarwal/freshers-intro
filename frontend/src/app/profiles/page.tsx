@@ -105,9 +105,9 @@ const UserGallery = () => {
     };
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  if (isLoading) return <Loading />;
+  if (isLoading) return <Loading loading_text='Loading profiles...'/>;
   if (error) return <p className="text-center py-10 text-red-500">Error loading profiles.</p>;
-  if (loading_or_not) return <Loading />;
+  if (loading_or_not) return <Loading loading_text='Loading profiles...'/>;
   if (!isAuthenticated) return null;
 
   const allProfiles: Profile[] = data?.pages.flat() ?? [];

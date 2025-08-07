@@ -34,9 +34,10 @@ export default function ProfileDetails({ profile }: { profile: Profile }) {
             <Swiper
           modules={[Navigation, Pagination, Autoplay]}
           navigation
+          loop
           autoplay={{delay: 2000}}
           
-          pagination={{ clickable: true, type: 'fraction' }}
+          pagination={{ clickable: true }}
           className="w-full aspect-[4/3] !h-full"
         >
           {images.map((url, i) => (

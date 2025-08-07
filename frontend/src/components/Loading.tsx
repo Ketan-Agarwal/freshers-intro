@@ -1,6 +1,10 @@
 import React from 'react';
 
-export default function Loading(){
+type props = {
+  loading_text: string;
+}
+
+export default function Loading({loading_text}: props){
     return (
         <div className="flex items-center justify-center py-10">
       <div className="flex items-center space-x-3">
@@ -24,7 +28,7 @@ export default function Loading(){
             d="M4 12a8 8 0 018-8v8z"
           ></path>
         </svg>
-        <p className="text-gray-600 text-sm font-medium">Loading profiles...</p>
+        <p className="text-gray-600 text-sm font-medium">{loading_text}</p>
       </div>
     </div>
     )
